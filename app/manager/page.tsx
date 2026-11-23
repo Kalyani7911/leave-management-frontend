@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, Employee, Leave } from "@/lib/api";
-import { Avatar } from "@/components/ui";
-
-const field = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm";
+import { api, Leave, Session, getSession } from "@/lib/api";
+import { Avatar, leaveTone } from "@/components/ui";
 
 function formatRange(from: string, to: string) {
   const f = new Date(from + "T00:00:00");
@@ -15,26 +13,12 @@ function formatRange(from: string, to: string) {
 }
 
 export default function ManagerPage() {
-  const [managers, setManagers] = useState<Employee[]>([]);
-  const [managerId, setManagerId] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
   const [pending, setPending] = useState<Leave[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const current = managers.find((m) => String(m.id) === managerId);
-
-  useEffect(() => {
-    api
-      .employees()
-      .then((all) => setManagers(all.filter((e) => e.role === "MANAGER")))
-      .catch((e) => setError(e.message));
-  }, []);
-
-  async function load(id: string) {
-    if (!id) {
-      setPending([]);
-      return;
-    }
+  async function load(id: number) {
     try {
       setPending(await api.pending(id));
     } catch (err) {
@@ -42,14 +26,17 @@ export default function ManagerPage() {
     }
   }
 
-  function selectManager(id: string) {
-    setManagerId(id);
-    setError("");
-    setMessage("");
-    load(id);
-  }
+  useEffect(() => {
+    const current = getSession();
+    if (!current) return;
+    setSession(current);
+    if (current.role === "MANAGER" || current.role === "HR") {
+      load(current.employeeId);
+    }
+  }, []);
 
   async function decide(action: "approve" | "reject", leave: Leave) {
+    if (!session) return;
     setError("");
     setMessage("");
     try {
@@ -57,10 +44,22 @@ export default function ManagerPage() {
       setMessage(
         `${action === "approve" ? "Approved" : "Rejected"}: ${leave.employeeName}, ${leave.leaveType} leave.`
       );
-      await load(managerId);
+      await load(session.employeeId);
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  if (!session) {
+    return <p className="text-muted">Loading...</p>;
+  }
+
+  if (session.role !== "MANAGER" && session.role !== "HR") {
+    return (
+      <div className="rounded-xl border border-dashed border-line p-10 text-center text-muted">
+        Approvals are only available to managers and HR.
+      </div>
+    );
   }
 
   return (
@@ -70,32 +69,6 @@ export default function ManagerPage() {
         <p className="mt-1 text-muted">Review leave requests from your team.</p>
       </section>
 
-      <section className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4">
-        {current ? (
-          <Avatar name={current.name} />
-        ) : (
-          <span className="h-11 w-11 rounded-full bg-free" />
-        )}
-        <div className="flex-1">
-          <label htmlFor="manager" className="block text-sm text-muted">
-            Viewing as
-          </label>
-          <select
-            id="manager"
-            className={`${field} mt-1`}
-            value={managerId}
-            onChange={(e) => selectManager(e.target.value)}
-          >
-            <option value="">Choose a manager</option>
-            {managers.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.department})
-              </option>
-            ))}
-          </select>
-        </div>
-      </section>
-
       {error && (
         <p className="rounded-lg bg-rejected-bg p-3 text-sm text-rejected">{error}</p>
       )}
@@ -103,13 +76,7 @@ export default function ManagerPage() {
         <p className="rounded-lg bg-approved-bg p-3 text-sm text-approved">{message}</p>
       )}
 
-      {!managerId && (
-        <div className="rounded-xl border border-dashed border-line p-10 text-center text-muted">
-          Choose a manager above to see the requests waiting for approval.
-        </div>
-      )}
-
-      {managerId && pending.length === 0 && (
+      {pending.length === 0 && (
         <div className="rounded-xl border border-dashed border-line p-10 text-center text-muted">
           You are all caught up. No requests are waiting for approval.
         </div>
@@ -127,10 +94,16 @@ export default function ManagerPage() {
             >
               <Avatar name={l.employeeName} />
               <div className="flex-1">
-                <div className="font-semibold">{l.employeeName}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{l.employeeName}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${leaveTone(l.leaveType).soft} ${leaveTone(l.leaveType).text}`}
+                  >
+                    {l.leaveType}
+                  </span>
+                </div>
                 <div className="text-sm text-muted">
-                  {l.leaveType} leave, {formatRange(l.fromDate, l.toDate)} ({l.days}{" "}
-                  {l.days === 1 ? "day" : "days"})
+                  {formatRange(l.fromDate, l.toDate)} ({l.days} {l.days === 1 ? "day" : "days"})
                 </div>
                 {l.reason && <div className="mt-1 text-sm">{l.reason}</div>}
               </div>

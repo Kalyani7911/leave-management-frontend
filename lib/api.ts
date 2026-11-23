@@ -1,4 +1,31 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL;
+const SESSION_KEY = "leave-session";
+
+export type Session = {
+  token: string;
+  employeeId: number;
+  name: string;
+  role: string;
+  department: string;
+};
+
+export function getSession(): Session | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as Session) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveSession(session: Session) {
+  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+export function clearSession() {
+  window.localStorage.removeItem(SESSION_KEY);
+}
 
 export type Employee = {
   id: number;
@@ -41,11 +68,23 @@ export type ApplyLeave = {
 };
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const session = getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session) {
+    headers.Authorization = `Bearer ${session.token}`;
+  }
+
+  const res = await fetch(BASE + path, { ...options, headers });
   const body = await res.json().catch(() => null);
+
+  if (res.status === 401 && path !== "/api/auth/login") {
+    clearSession();
+    window.location.href = "/login";
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+  if (res.status === 403) {
+    throw new Error("You are not allowed to do this.");
+  }
   if (!res.ok) {
     throw new Error(body?.message || "Request failed");
   }
@@ -53,6 +92,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  login: (email: string, password: string) =>
+    request<Session>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
   employees: () => request<Employee[]>("/api/employees"),
   leaveTypes: () => request<LeaveType[]>("/api/leave-types"),
   balance: (employeeId: number | string) =>
