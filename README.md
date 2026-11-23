@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Leave Desk (Frontend)
 
-## Getting Started
+A leave management web app where employees request time off and managers approve or reject it. This repository is the **Next.js frontend**. It talks to a Spring Boot REST API backed by PostgreSQL.
 
-First, run the development server:
+Backend repository: [leave-management-backend](https://github.com/Kalyani7911/leave-management-backend)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Screenshots
+
+| Sign in | Employee dashboard | Manager approvals |
+|---|---|---|
+| ![Sign in](docs/screenshots/login.png) | ![Employee dashboard](docs/screenshots/employee-dashboard.png) | ![Manager approvals](docs/screenshots/manager-approvals.png) |
+
+## Features
+
+- Sign in with email and password. The server returns a signed JWT token that is sent with every request.
+- **Employees** see their leave balance per leave type (shown as rows of day blocks), request leave, and follow the status of every request.
+- **Managers** see pending requests from their own team and approve or reject them.
+- The navigation changes with the role: only managers and HR see the Approvals page.
+- Rules enforced by the API (overlapping dates, not enough balance, wrong team) appear as clear messages in the interface.
+- Expired sessions return the user to the sign-in page.
+
+## Tech stack
+
+- Next.js (App Router), React, TypeScript
+- Tailwind CSS
+- REST API calls with `fetch`, all kept in one file (`lib/api.ts`)
+
+## Run it locally
+
+You need Node.js 20 or newer, and the backend running on port 8080 (see the backend repository for its setup).
+
+1. Clone this repository and install the packages:
+
+   ```
+   git clone https://github.com/Kalyani7911/leave-management-frontend.git
+   cd leave-management-frontend
+   npm install
+   ```
+
+2. Create a file named `.env.local` in the project root with this line:
+
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:8080
+   ```
+
+3. Start the app and open http://localhost:3000:
+
+   ```
+   npm run dev
+   ```
+
+## Demo accounts
+
+All demo accounts use the password `Leave@123`.
+
+| Role | Name | Email |
+|---|---|---|
+| Employee | Pravin Patil | pravin.patil@example.com |
+| Manager | Rahul Joshi | rahul.joshi@example.com |
+| HR | Anita Deshmukh | anita.deshmukh@example.com |
+
+The sign-in page also has buttons that fill these in for you.
+
+## Project structure
+
+```
+app/            pages: employee dashboard, manager approvals, sign in
+components/     shared interface parts (header, status badge, day blocks, avatar)
+lib/api.ts      all API calls, session handling and shared types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Notes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The token is kept in the browser's local storage to keep this demo simple. A production app would normally use an httpOnly cookie instead.
+- The server enforces every permission. The interface only hides what a user cannot do anyway.
