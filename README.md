@@ -4,6 +4,14 @@ A leave management web app where employees request time off and managers approve
 
 Backend repository: [leave-management-backend](https://github.com/Kalyani7911/leave-management-backend)
 
+## Live demo
+
+**https://leave-management-frontend-psi.vercel.app**
+
+Use the demo buttons on the sign-in page to log in as an employee, a manager or HR.
+
+The backend runs on a free hosting plan that goes to sleep when nobody is using it, so the first sign-in after a quiet period can take up to a minute. After that, everything is fast.
+
 ## Screenshots
 
 | Sign in | Employee dashboard | Manager approvals |
