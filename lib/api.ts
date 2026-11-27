@@ -4,6 +4,7 @@ const SESSION_KEY = "leave-session";
 export type Session = {
   token: string;
   employeeId: number;
+  employeeCode: string;
   name: string;
   role: string;
   department: string;
@@ -38,14 +39,14 @@ export type Employee = {
 export type LeaveType = {
   id: number;
   name: string;
-  yearlyQuota: number;
+  yearlyQuota: number | null;
 };
 
 export type Balance = {
   leaveType: string;
-  quota: number;
+  quota: number | null;
   used: number;
-  remaining: number;
+  remaining: number | null;
 };
 
 export type Leave = {
@@ -83,7 +84,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new Error("Your session has expired. Please sign in again.");
   }
   if (res.status === 403) {
-    throw new Error("You are not allowed to do this.");
+    throw new Error(body?.message || "You are not allowed to do this.");
   }
   if (!res.ok) {
     throw new Error(body?.message || "Request failed");
@@ -92,17 +93,19 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
+  login: (employeeCode: string, password: string) =>
     request<Session>("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ employeeCode, password }),
     }),
   employees: () => request<Employee[]>("/api/employees"),
   leaveTypes: () => request<LeaveType[]>("/api/leave-types"),
   balance: (employeeId: number | string) =>
     request<Balance[]>(`/api/leaves/balance/${employeeId}`),
-  myLeaves: (employeeId: number | string) =>
-    request<Leave[]>(`/api/leaves/employee/${employeeId}`),
+  myLeaves: (employeeId: number | string, year?: number) =>
+    request<Leave[]>(
+      `/api/leaves/employee/${employeeId}${year ? `?year=${year}` : ""}`
+    ),
   pending: (managerId: number | string) =>
     request<Leave[]>(`/api/leaves/pending?managerId=${managerId}`),
   apply: (data: ApplyLeave) =>

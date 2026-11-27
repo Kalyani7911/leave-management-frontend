@@ -14,12 +14,19 @@ const tones: Record<string, Tone> = {
     text: "text-sky-700",
     edge: "border-t-sky-500",
   },
-  Paid: {
+    "Government Holiday": {
     bar: "bg-violet-500",
     track: "bg-violet-100",
     soft: "bg-violet-50",
     text: "text-violet-700",
     edge: "border-t-violet-500",
+  },
+  "Loss of Pay": {
+    bar: "bg-amber-500",
+    track: "bg-amber-100",
+    soft: "bg-amber-50",
+    text: "text-amber-700",
+    edge: "border-t-amber-500",
   },
   Sick: {
     bar: "bg-rose-500",

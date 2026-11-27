@@ -10,26 +10,26 @@ const demos = [
   {
     role: "Employee",
     name: "Pravin Patil",
-    email: "pravin.patil@example.com",
+    code: "EMP004",
     style: "bg-sky-50 text-sky-700 hover:bg-sky-100",
   },
   {
     role: "Manager",
     name: "Rahul Joshi",
-    email: "rahul.joshi@example.com",
+    code: "EMP002",
     style: "bg-violet-50 text-violet-700 hover:bg-violet-100",
   },
   {
     role: "HR",
     name: "Anita Deshmukh",
-    email: "anita.deshmukh@example.com",
+    code: "EMP001",
     style: "bg-rose-50 text-rose-700 hover:bg-rose-100",
   },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [employeeCode, setEmployeeCode] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -39,7 +39,7 @@ export default function LoginPage() {
     setError("");
     setSending(true);
     try {
-      const session = await api.login(email, password);
+      const session = await api.login(employeeCode.trim(), password);
       saveSession(session);
       router.push(session.role === "MANAGER" ? "/manager" : "/");
     } catch (err) {
@@ -53,7 +53,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md space-y-6 pt-6">
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        <p className="mt-1 text-muted">Use your work email to manage your leave.</p>
+        <p className="mt-1 text-muted">Use your employee ID to manage your leave.</p>
       </section>
 
       <form
@@ -61,17 +61,18 @@ export default function LoginPage() {
         className="space-y-4 rounded-xl border border-t-4 border-line border-t-brand bg-surface p-6"
       >
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm text-muted">
-            Email
+          <label htmlFor="employeeCode" className="mb-1 block text-sm text-muted">
+            Employee ID
           </label>
           <input
-            id="email"
-            type="email"
+            id="employeeCode"
+            type="text"
             required
             autoComplete="username"
-            className={field}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="For example: EMP004"
+            className={`${field} uppercase`}
+            value={employeeCode}
+            onChange={(e) => setEmployeeCode(e.target.value)}
           />
         </div>
         <div>
@@ -109,17 +110,19 @@ export default function LoginPage() {
         <div className="mt-3 flex flex-wrap gap-2">
           {demos.map((d) => (
             <button
-              key={d.email}
+              key={d.code}
               type="button"
               onClick={() => {
-                setEmail(d.email);
+                setEmployeeCode(d.code);
                 setPassword("Leave@123");
                 setError("");
               }}
               className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${d.style}`}
             >
               {d.role}
-              <span className="block text-xs font-normal opacity-80">{d.name}</span>
+              <span className="block text-xs font-normal opacity-80">
+                {d.name} ({d.code})
+              </span>
             </button>
           ))}
         </div>

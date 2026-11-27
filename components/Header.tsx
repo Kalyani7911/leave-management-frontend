@@ -25,7 +25,11 @@ export default function Header() {
     router.push("/login");
   }
 
-  const links = [{ href: "/", label: "My leave" }];
+  //const links = [{ href: "/", label: "My leave" }];
+    const links = [
+    { href: "/", label: "Dashboard" },
+    { href: "/my-leave", label: "My leave" },
+  ];
   if (session && (session.role === "MANAGER" || session.role === "HR")) {
     links.push({ href: "/manager", label: "Approvals" });
   }
